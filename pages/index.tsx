@@ -2,8 +2,63 @@ import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
+import SimpleWebAuthnBrowser from '@simplewebauthn/browser';
+import { startRegistration } from '@simplewebauthn/browser';
+import {useState} from 'react';
+import { startAuthentication } from '@simplewebauthn/browser';
+
 
 const Home: NextPage = () => {
+	const [username, setUsername] = useState('');
+
+	const register = async () => {
+	    const resp = await fetch('/api/register?username='+username);
+		console.log('yes');
+		try{
+			let attResp = await startRegistration(await resp.json());
+			const verificationResp = await fetch('/api/verifyRegister?username='+username, {
+				method: 'POST',
+				headers: {
+				  'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(attResp),
+			  });
+			  const verificationJSON = await verificationResp.json();
+			  if (verificationJSON && verificationJSON.verified) {
+				console.log('success');
+			  } else {
+				console.log('failed',verificationJSON);
+
+			  }
+		} catch(err:Error){
+			console.log(err);
+			
+		}
+	}
+	const login = async () => {
+		const resp = await fetch('/api/login?username='+username);
+		console.log(resp);
+		try{
+		let asseResp = await startAuthentication(await resp.json());
+		}
+		catch(e){
+			console.log(e);
+		}
+		// const verificationResp = await fetch('/api/startLogin', {
+		// 	method: 'POST',
+		// 	headers: {
+		// 	  'Content-Type': 'application/json',
+		// 	},
+		// 	body: JSON.stringify(asseResp),
+		//   });
+		// const verificationJSON = await verificationResp.json();
+		// if (verificationJSON && verificationJSON.verified) {
+		// 	alert('login success');
+		// } else {
+		// 	alert('login failed');
+		// }
+
+	}
   return (
     <div className={styles.container}>
       <Head>
@@ -13,44 +68,10 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+		<input placeholder="username" onChange={e=>setUsername(e.target.value)} />
+      <button onClick={()=>register()}>Register</button>
+	  <button onClick={()=>login()}>Login</button>
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.tsx</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
       </main>
 
       <footer className={styles.footer}>
