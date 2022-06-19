@@ -39,7 +39,7 @@ const origin = `http://${rpID}:6969`;
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse
 ) {
 	let username = req.query.username;
 	const userAuthenticators: Authenticator[] = await prisma.UserCredentials.findMany({where:{username}});

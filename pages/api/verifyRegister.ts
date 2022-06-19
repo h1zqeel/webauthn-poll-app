@@ -40,7 +40,7 @@ const origin = `http://${rpID}:6969`;
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse
 ) {
 	let username = req.query.username;
 	const upsertUser: UserModel = await prisma.user.upsert({
@@ -75,7 +75,8 @@ export default async function handler(
 		credentialID: req.body.id,
 		username: username,
 		key: info.credentialPublicKey,
-		counter: info.counter
+		counter: info.counter,
+		transports: req.body.transports.toString() ?? ['internal'].toString(),
 	}})
 
 	return res.status(200).json({verified});

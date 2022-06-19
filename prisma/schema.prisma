@@ -20,4 +20,5 @@ model UserCredentials {
 	username String
 	key Bytes
 	counter Int
+	transports String?
 }
