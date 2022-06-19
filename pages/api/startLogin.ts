@@ -17,7 +17,7 @@ type UserModel = {
 
 type Authenticator = {
 	// SQL: Encode to base64url then store as `TEXT`. Index this column
-	credentialID: Buffer;
+	credentialID: string;
 	// SQL: Store raw bytes as `BYTEA`/`BLOB`/etc...
 	credentialPublicKey: Buffer;
 	// SQL: Consider `BIGINT` since some authenticators return atomic timestamps as counters
@@ -26,7 +26,7 @@ type Authenticator = {
 	username: string;
 	// SQL: `VARCHAR(255)` and store string array as a CSV string
 	// ['usb' | 'ble' | 'nfc' | 'internal']
-	transports?: AuthenticatorTransport[];
+	transports?: string;
 };
 
 const userAuthenticators: Authenticator[] = [];
