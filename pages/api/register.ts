@@ -42,7 +42,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
 	let username = req.query.username;
-	const userAuthenticators: Authenticator[] = await prisma.UserCredentials.findMany({where:{username}});
+	const userAuthenticators: Authenticator[] = await prisma.userCredentials.findMany({where:{username}});
 
 	//findUserOrCreate
 	const upsertUser: UserModel = await prisma.user.upsert({
