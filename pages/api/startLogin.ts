@@ -22,6 +22,8 @@ type Authenticator = {
 	credentialPublicKey: Buffer;
 	// SQL: Consider `BIGINT` since some authenticators return atomic timestamps as counters
 	counter: number;
+
+	username: string;
 	// SQL: `VARCHAR(255)` and store string array as a CSV string
 	// ['usb' | 'ble' | 'nfc' | 'internal']
 	transports?: AuthenticatorTransport[];
