@@ -4,7 +4,7 @@ import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import SimpleWebAuthnBrowser from '@simplewebauthn/browser';
 import { startRegistration } from '@simplewebauthn/browser';
-import {useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import { startAuthentication } from '@simplewebauthn/browser';
 
 const Home: NextPage = () => {

@@ -32,8 +32,8 @@ type Authenticator = {
 
 
 const rpName = 'SimpleWebAuthn Example';
-const rpID = 'webauthn-poll-app.vercel.app';
-const origin = `https://webauthn-poll-app.vercel.app`;
+const rpID = process.env.RP_ID || 'webauthn-poll-app.vercel.app';
+const origin = process.env.ORIGIN || `https://webauthn-poll-app.vercel.app`;
 
 
 
@@ -76,6 +76,11 @@ export default async function handler(
 			type: 'public-key',
 			transports: ['internal'],
 		})),
+		options.excludeCredentials.push({
+			id:'',
+			type:'public-key',
+			transports:['internal']
+		})
 
 		//set user current challenge
 			await prisma.user.update({

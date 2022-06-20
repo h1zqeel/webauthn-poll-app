@@ -30,8 +30,8 @@ type Authenticator = {
 
 
 const rpName = 'SimpleWebAuthn Example';
-const rpID = 'webauthn-poll-app.vercel.app';
-const origin = `https://webauthn-poll-app.vercel.app`;
+const rpID = process.env.RP_ID || 'webauthn-poll-app.vercel.app';
+const origin = process.env.ORIGIN || `https://webauthn-poll-app.vercel.app`;
 
 
 
@@ -49,7 +49,6 @@ export default async function handler(
 			return res.status(200).json({error:'invalid username'});
 		}
 		const userAuthenticators:Authenticator[] = await prisma.userCredentials.findMany({where:{username}});
-
 		const options = generateAuthenticationOptions({
 			userVerification: 'preferred',
 		});
