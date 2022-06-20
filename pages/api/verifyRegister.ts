@@ -31,7 +31,7 @@ type Authenticator = {
 };
 
 const rpName = 'Polling App Built with Web Auth N';
-const rpID = process.env.DOMAIN || 'localhost';
+const rpID = process.env.DOMAIN || 'webauthn-poll-app.vercel.app';
 const origin = process.env.ORIGIN || `http://${rpID}:6969`;
 
 
