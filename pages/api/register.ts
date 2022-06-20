@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, User } from '@prisma/client';
 const prisma = new PrismaClient();
 
 import {
@@ -13,9 +13,9 @@ type Data = {
 }
 
 type UserModel = {
-	id: string;
+	id: number;
 	username: string;
-	currentChallenge?: string;
+	currentChallenge?: string | null;
 };
 
 type Authenticator = {
@@ -41,46 +41,59 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-	let username = req.query.username;
-	const userAuthenticators = await prisma.userCredentials.findMany({where:{username}});
+	let username: string = req.query.username.toString();
+	try{
+		const userAuthenticators = await prisma.userCredentials.findMany({where:{username}});
 
-	//findUserOrCreate
-	const upsertUser = await prisma.user.upsert({
-		where: {
-		  username: req.query.username,
-		},
-		update: {},
-		create: {
-		  username: req.query.username,
-		},
-	  })
-	const options = generateRegistrationOptions({
-		rpName,
-		rpID,
-		userID: upsertUser.id,
-		userName: upsertUser.username,
-		// Don't prompt users for additional information about the authenticator
-		// (Recommended for smoother UX)
-		attestationType: 'indirect',
-		// Prevent users from re-registering existing authenticators
-		excludeCredentials: userAuthenticators.map(authenticator => ({
-		  id: authenticator.credentialID,
-		  type: 'public-key',
-		  // Optional
-		  transports: ['internal']
-
+		//findUserOrCreate
+		//try creating the user
+		let upsertUser:any;
+		try{
+			upsertUser= await prisma.user.create({
+				data: {
+				username: username,
+				},
+			});
+		}
+		catch(err){
+		//catch the error, most probably a conflict return error
+		console.log('user already exists');
+			return res.status(200).json({error:'username already exists use another'});
+		}
+		//generate registration options
+		const options = generateRegistrationOptions({
+			rpName,
+			rpID,
+			userID: upsertUser.username,
+			userName: upsertUser.username,
+			attestationType: 'direct',
+			authenticatorSelection: {
+				userVerification: 'preferred',
+			},
+		});
+		options.excludeCredentials = userAuthenticators.map(authenticator => ({
+			id: authenticator.credentialID,
+			type: 'public-key',
+			transports: ['internal'],
 		})),
-	  });
 
-	  //set user current challenge
-	  	await prisma.user.update({
-			where:{
-				username,
-			},
-			data:{
-				currentChallenge: options.challenge
-			},
-		})
+		//set user current challenge
+			await prisma.user.update({
+				where:{
+					username,
+				},
+				data:{
+					currentChallenge: options.challenge
+				},
+			})
 
-	return res.status(200).json(options);
+		return res.status(200).json(options);
+	}
+	catch(err){
+		//incase of any kind of error delete the user and return error
+		await prisma.user.delete({
+			where:{username}
+		});
+		return res.status(400).json({error:'an error occured, please try again later'});
+	}
 }

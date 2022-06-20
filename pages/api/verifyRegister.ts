@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, User } from '@prisma/client';
 const prisma = new PrismaClient();
 
 import {
@@ -13,9 +13,9 @@ type Data = {
 }
 
 type UserModel = {
-	id: string;
+	id: number;
 	username: string;
-	currentChallenge?: string;
+	currentChallenge?: string | null;
 };
 
 type Authenticator = {
@@ -30,54 +30,63 @@ type Authenticator = {
 	transports?: AuthenticatorTransport[];
 };
 
-const userAuthenticators: Authenticator[] = [];
-
-const rpName = 'SimpleWebAuthn Example';
+const rpName = 'Polling App Built with Web Auth N';
 const rpID = 'localhost';
 const origin = `http://${rpID}:6969`;
-
 
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-	let username = req.query.username;
-	const upsertUser: UserModel = await prisma.user.upsert({
-		where: {
-		  username: req.query.username,
-		},
-		update: {},
-		create: {
-		  username: req.query.username,
-		},
-	  });
-	let verification;
-	// let verification;
-	console.log(req.body,'cred');
-	try {
-	  verification = await verifyRegistrationResponse({
-		credential: req.body,
-		expectedChallenge: upsertUser.currentChallenge,
-		expectedOrigin: origin,
-		expectedRPID: rpID,
-	  });
-	} catch (error) {
-	  console.error(error);
-	  return res.status(400).send({ error: error.message });
+	let username: string = req.query.username.toString();
+
+	try{
+		let upsertUser: any = await prisma.user.findFirst({
+				where: {
+				username: username,
+				},
+			});
+		
+		let verification;
+
+		try {
+		verification = await verifyRegistrationResponse({
+			credential: req.body,
+			expectedChallenge: upsertUser.currentChallenge || '',
+			expectedOrigin: origin,
+			expectedRPID: rpID,
+		});
+		} catch (error) {
+			await prisma.user.delete({
+				where:{username}
+			});
+		return res.status(200).send({ error: 'errored during registration' });
+		}
+
+		const { verified, registrationInfo: info } = verification;
+		if(verified && info){
+			await prisma.userCredentials.create({data:{
+				credentialID: req.body.id,
+				username: username,
+				key: info.credentialPublicKey,
+				counter: info.counter,
+			}})
+		}
+		else {
+			await prisma.user.delete({
+				where:{username}
+			})
+			return res.status(200).json({error:'error occured trying to create credential'});
+		}
+
+		return res.status(200).json({verified});
 	}
-	
-	//findUserOrCreate
-	
-	const { verified, registrationInfo: info } = verification;
-
-	await prisma.UserCredentials.create({data:{
-		credentialID: req.body.id,
-		username: username,
-		key: info.credentialPublicKey,
-		counter: info.counter,
-		transports: req.body.transports.toString() ?? ['internal'].toString(),
-	}})
-
-	return res.status(200).json({verified});
+	catch(err){
+		// incase of any error catch the error and delete the creted user
+		await prisma.user.delete({
+			where:{username}
+		});
+		return res.status(400).json({error:'an error occured, please try again later'});
+	}
 }

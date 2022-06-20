@@ -11,8 +11,8 @@ import {
 
 type UserModel = {
 	id: number;
-	username: string;
-	currentChallenge?: string;
+	username: string | null;
+	currentChallenge?: string | null;
 };
 
 type Authenticator = {
@@ -22,10 +22,10 @@ type Authenticator = {
 	key: Buffer;
 	// SQL: Consider `BIGINT` since some authenticators return atomic timestamps as counters
 	counter: number;
-	username: string;
+	username: string | null;
 	// SQL: `VARCHAR(255)` and store string array as a CSV string
 	// ['usb' | 'ble' | 'nfc' | 'internal']
-	transports?: string;
+	transports?: string | null;
 };
 
 
@@ -39,36 +39,37 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-	let username = req.query.username;
-	const userAuthenticators:Authenticator[] = await prisma.userCredentials.findMany({where:{username}});
-	console.log(userAuthenticators);
-	//findUserOrCreate
-	const upsertUser = await prisma.user.upsert({
-		where: {
-		  username: req.query.username,
-		},
-		update: {},
-		create: {
-		  username: req.query.username,
-		},
-	  })
-	  const options = generateAuthenticationOptions({
-		allowCredentials: userAuthenticators.map(authenticator => ({
-		  id: authenticator.credentialID,
-		  type: 'public-key',
-		  transports: ['internal']
+	let username: any = req.query.username.toString();
+	try{
+		try{
+			//checking if user exists or not
+			await prisma.user.findFirst({where:{username}});
+		} catch(err){
+			return res.status(200).json({error:'invalid username'});
+		}
+		const userAuthenticators:Authenticator[] = await prisma.userCredentials.findMany({where:{username}});
 
+		const options = generateAuthenticationOptions({
+			userVerification: 'preferred',
+		});
+		options.allowCredentials = userAuthenticators.map(authenticator => ({
+			id: authenticator.credentialID,
+			type: 'public-key',
+			transports: ['internal']
 		})),
-		userVerification: 'preferred',
-	  });
-	  	await prisma.user.update({
-			where:{
-				username,
-			},
-			data:{
-				currentChallenge: options.challenge
-			},
-		})
 
-	return res.status(200).json(options);
+			await prisma.user.update({
+				where:{
+					username,
+				},
+				data:{
+					currentChallenge: options.challenge
+				},
+			})
+
+		return res.status(200).json(options);
+	}
+	catch(err){
+		return res.status(200).json({error:'an unknown error occured'});
+	}
 }

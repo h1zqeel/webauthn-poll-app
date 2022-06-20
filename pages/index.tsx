@@ -4,18 +4,21 @@ import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import SimpleWebAuthnBrowser from '@simplewebauthn/browser';
 import { startRegistration } from '@simplewebauthn/browser';
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import { startAuthentication } from '@simplewebauthn/browser';
 
-
 const Home: NextPage = () => {
+
 	const [username, setUsername] = useState('');
 
 	const register = async () => {
-	    const resp = await fetch('/api/register?username='+username);
-		console.log('yes');
+	    const resp:any = await (await fetch('/api/register?username='+username)).json();
+		if(resp.error){
+			console.log(resp.error);
+			return;
+		}
 		try{
-			let attResp = await startRegistration(await resp.json());
+			let attResp = await startRegistration(await resp);
 			const verificationResp = await fetch('/api/verifyRegister?username='+username, {
 				method: 'POST',
 				headers: {
@@ -25,40 +28,38 @@ const Home: NextPage = () => {
 			  });
 			  const verificationJSON = await verificationResp.json();
 			  if (verificationJSON && verificationJSON.verified) {
-				console.log('success');
+				console.log('registration successful');
 			  } else {
-				console.log('failed',verificationJSON);
+				console.log('registration failed');
 
 			  }
-		} catch(err:Error){
+		} catch(err){
 			console.log(err);
-			
 		}
 	}
-	const login = async () => {
-		const resp = await fetch('/api/login?username='+username);
-		console.log(resp);
-		try{
-		let asseResp = await startAuthentication(await resp.json());
-		}
-		catch(e){
-			console.log(e);
-		}
-		// const verificationResp = await fetch('/api/startLogin', {
-		// 	method: 'POST',
-		// 	headers: {
-		// 	  'Content-Type': 'application/json',
-		// 	},
-		// 	body: JSON.stringify(asseResp),
-		//   });
-		// const verificationJSON = await verificationResp.json();
-		// if (verificationJSON && verificationJSON.verified) {
-		// 	alert('login success');
-		// } else {
-		// 	alert('login failed');
-		// }
 
+	async function login () {
+		const resp:any = await (await fetch('/api/login?username='+username)).json();
+		if(resp.error){
+			console.log(resp.error);
+			return;
+		}
+		let asseResp = await startAuthentication(await resp);
+		const verificationResp = await fetch('/api/startLogin?username='+username, {
+				method: 'POST',
+				headers: {
+				'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(asseResp),
+			});
+			const verificationJSON = await verificationResp.json();
+			if (verificationJSON && verificationJSON.verified) {
+				console.log('you have logged in');
+			} else {
+				console.log('failed to authenticate');
+			}
 	}
+
   return (
     <div className={styles.container}>
       <Head>
@@ -70,7 +71,7 @@ const Home: NextPage = () => {
       <main className={styles.main}>
 		<input placeholder="username" onChange={e=>setUsername(e.target.value)} />
       <button onClick={()=>register()}>Register</button>
-	  <button onClick={()=>login()}>Login</button>
+	  <button id='yes' onClick={()=>login()}>Login</button>
 
       </main>
 

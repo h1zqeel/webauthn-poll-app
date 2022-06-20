@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, UserCredentials } from '@prisma/client';
 const prisma = new PrismaClient();
 
 import {
@@ -10,9 +10,9 @@ import {
 
 
 type UserModel = {
-	id: string;
+	id: number;
 	username: string;
-	currentChallenge?: string;
+	currentChallenge?: string | null;
 };
 
 type Authenticator = {
@@ -41,34 +41,46 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-	let username = req.query.username;
+	let username: string = req.query.username.toString();
+	try{
 	const upsertUser: UserModel = await prisma.user.upsert({
 		where: {
-		  username: req.query.username,
+		  username: username,
 		},
 		update: {},
 		create: {
-		  username: req.query.username,
+		  username: username,
 		},
 	  });
-	const authenticator = prisma.UserCredentials.findUnique({where:{username}});
-
+	const authenticator:any = await prisma.userCredentials.findFirst({where:{username}});
+console.log(authenticator, 'auther');
 	let verification;
 	console.log(req.body,'cred');
 	try {
 		verification = await verifyAuthenticationResponse({
-		  credential: body,
-		  expectedChallenge,
+		  credential: req.body,
+		  expectedChallenge: upsertUser.currentChallenge || '',
 		  expectedOrigin: origin,
 		  expectedRPID: rpID,
-		  authenticator,
+		  authenticator: {
+			credentialPublicKey: authenticator.key,
+			credentialID: authenticator.credentialID,
+			counter: authenticator.counter
+		  },
 		});
 	  } catch (error) {
 		console.error(error);
-		return res.status(400).send({ error: error.message });
+		return res.status(200).send({ error: 'error trying to authenticate' });
 	  }
-	
-	const { verified } = verification;
 
+	const { verified } = verification;
+	if(verified){
+		console.log(verified);
+		//start a session with public key and username
+	}
 	return res.status(200).json({verified});
+	}
+	catch(err){
+		return res.status(400).json({error:'an unknown error occured'})
+	}
 }
