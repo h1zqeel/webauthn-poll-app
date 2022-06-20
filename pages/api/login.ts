@@ -45,6 +45,7 @@ export default async function handler(
 			//checking if user exists or not
 			await prisma.user.findFirst({where:{username}});
 		} catch(err){
+			console.log(err);
 			return res.status(200).json({error:'invalid username'});
 		}
 		const userAuthenticators:Authenticator[] = await prisma.userCredentials.findMany({where:{username}});

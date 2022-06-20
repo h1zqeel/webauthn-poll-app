@@ -8,13 +8,14 @@ import {useState, useEffect} from 'react';
 import { startAuthentication } from '@simplewebauthn/browser';
 
 const Home: NextPage = () => {
-
+	const [response, setResponse] = useState('');
 	const [username, setUsername] = useState('');
 
 	const register = async () => {
 	    const resp:any = await (await fetch('/api/register?username='+username)).json();
 		if(resp.error){
 			console.log(resp.error);
+			setResponse(resp.error);
 			return;
 		}
 		try{
@@ -29,8 +30,11 @@ const Home: NextPage = () => {
 			  const verificationJSON = await verificationResp.json();
 			  if (verificationJSON && verificationJSON.verified) {
 				console.log('registration successful');
+				setResponse('register success');
 			  } else {
 				console.log('registration failed');
+				setResponse('register failed');
+
 
 			  }
 		} catch(err){
@@ -42,6 +46,7 @@ const Home: NextPage = () => {
 		const resp:any = await (await fetch('/api/login?username='+username)).json();
 		if(resp.error){
 			console.log(resp.error);
+			setResponse(resp.error);
 			return;
 		}
 		let asseResp = await startAuthentication(await resp);
@@ -55,8 +60,10 @@ const Home: NextPage = () => {
 			const verificationJSON = await verificationResp.json();
 			if (verificationJSON && verificationJSON.verified) {
 				console.log('you have logged in');
+				setResponse('logged in');
 			} else {
 				console.log('failed to authenticate');
+				setResponse('login failed');
 			}
 	}
 
@@ -72,7 +79,7 @@ const Home: NextPage = () => {
 		<input placeholder="username" onChange={e=>setUsername(e.target.value)} />
       <button onClick={()=>register()}>Register</button>
 	  <button id='yes' onClick={()=>login()}>Login</button>
-
+	<p>{response}</p>
       </main>
 
       <footer className={styles.footer}>
