@@ -32,8 +32,8 @@ type Authenticator = {
 
 
 const rpName = 'SimpleWebAuthn Example';
-const rpID = process.env.DOMAIN || 'localhost';
-
+const rpID = 'webauthn-poll-app.vercel.app';
+const origin = `https://webauthn-poll-app.vercel.app`;
 
 
 
