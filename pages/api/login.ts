@@ -30,7 +30,7 @@ type Authenticator = {
 
 
 const rpName = 'SimpleWebAuthn Example';
-const rpID = 'localhost';
+const rpID = process.env.DOMAIN || 'localhost';
 const origin = `http://${rpID}:6969`;
 
 

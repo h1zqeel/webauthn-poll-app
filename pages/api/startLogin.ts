@@ -32,8 +32,8 @@ type Authenticator = {
 const userAuthenticators: Authenticator[] = [];
 
 const rpName = 'SimpleWebAuthn Example';
-const rpID = 'localhost';
-const origin = process.env.ROOT_URL || `http://${rpID}:6969`;
+const rpID = process.env.DOMAIN || 'localhost';
+const origin = process.env.ORIGIN || `http://${rpID}:6969`;
 
 
 

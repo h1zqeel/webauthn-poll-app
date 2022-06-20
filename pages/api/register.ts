@@ -32,8 +32,8 @@ type Authenticator = {
 
 
 const rpName = 'SimpleWebAuthn Example';
-const rpID = 'localhost';
-const origin = `http://${rpID}:6969`;
+const rpID = process.env.DOMAIN || 'localhost';
+
 
 
 
@@ -49,7 +49,7 @@ export default async function handler(
 		//try creating the user
 		let upsertUser:any;
 		try{
-			upsertUser= await prisma.user.create({
+			upsertUser = await prisma.user.create({
 				data: {
 				username: username,
 				},
