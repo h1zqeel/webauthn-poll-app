@@ -32,7 +32,7 @@ type Authenticator = {
 
 const rpName = 'Polling App Built with Web Auth N';
 const rpID = 'localhost';
-const origin = `http://${rpID}:6969`;
+const origin = process.env.ORIGIN || `http://${rpID}:6969`;
 
 
 export default async function handler(

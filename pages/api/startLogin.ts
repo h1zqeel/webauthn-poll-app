@@ -33,7 +33,7 @@ const userAuthenticators: Authenticator[] = [];
 
 const rpName = 'SimpleWebAuthn Example';
 const rpID = 'localhost';
-const origin = `http://${rpID}:6969`;
+const origin = process.env.ROOT_URL || `http://${rpID}:6969`;
 
 
 
