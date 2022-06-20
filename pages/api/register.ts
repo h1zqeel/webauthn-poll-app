@@ -43,15 +43,30 @@ export default async function handler(
 ) {
 	let username: string = req.query.username.toString();
 	try{
+		try{
+			//checking if user exists or not
+			// we only need to check if he has a credential i.e a user with no credential is no user
+			let credential: any = await prisma.userCredentials.findFirst({where:{username}});
+			if(credential){
+				return res.status(200).json({error:'user already exists'});
+			}
+		} catch(err){
+			console.log(err);
+			return res.status(200).json({error:'invalid username'});
+		}
 		const userAuthenticators = await prisma.userCredentials.findMany({where:{username}});
 
 		//findUserOrCreate
 		//try creating the user
 		let upsertUser:any;
 		try{
-			upsertUser = await prisma.user.create({
-				data: {
-				username: username,
+			upsertUser = await prisma.user.upsert({
+				where:{
+					username,
+				},
+				update: {},
+				create: {
+					username: username,
 				},
 			});
 		}
@@ -69,6 +84,7 @@ export default async function handler(
 			attestationType: 'direct',
 			authenticatorSelection: {
 				userVerification: 'preferred',
+				authenticatorAttachment:'platform',
 			},
 		});
 		options.excludeCredentials = userAuthenticators.map(authenticator => ({

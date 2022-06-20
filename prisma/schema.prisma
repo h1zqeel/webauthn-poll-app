@@ -9,6 +9,12 @@ datasource db {
   url      = env("DATABASE_URI")
 }
 
+model preRegisterUsers{
+	id Int @id @default(autoincrement())
+	username String @unique
+	currentChallenge String?
+}
+
 model User {
 	id Int @id @default(autoincrement())
 	username String @unique

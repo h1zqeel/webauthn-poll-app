@@ -43,7 +43,11 @@ export default async function handler(
 	try{
 		try{
 			//checking if user exists or not
-			await prisma.user.findFirst({where:{username}});
+			// we only need to check if he has a credential ie a user with no credential is no user
+			let credential: any = await prisma.userCredentials.findFirst({where:{username}});
+			if(!credential){
+				return res.status(200).json({error:'user does not exist'});
+			}
 		} catch(err){
 			console.log(err);
 			return res.status(200).json({error:'invalid username'});

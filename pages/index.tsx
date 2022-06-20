@@ -39,6 +39,7 @@ const Home: NextPage = () => {
 			  }
 		} catch(err){
 			console.log(err);
+			setResponse('cancelled');
 		}
 	}
 
@@ -49,22 +50,28 @@ const Home: NextPage = () => {
 			setResponse(resp.error);
 			return;
 		}
-		let asseResp = await startAuthentication(await resp);
-		const verificationResp = await fetch('/api/startLogin?username='+username, {
-				method: 'POST',
-				headers: {
-				'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(asseResp),
-			});
-			const verificationJSON = await verificationResp.json();
-			if (verificationJSON && verificationJSON.verified) {
-				console.log('you have logged in');
-				setResponse('logged in');
-			} else {
-				console.log('failed to authenticate');
-				setResponse('login failed');
-			}
+		try{
+			let asseResp = await startAuthentication(await resp);
+			const verificationResp = await fetch('/api/startLogin?username='+username, {
+					method: 'POST',
+					headers: {
+					'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(asseResp),
+				});
+				const verificationJSON = await verificationResp.json();
+				if (verificationJSON && verificationJSON.verified) {
+					console.log('you have logged in');
+					setResponse('logged in');
+				} else {
+					console.log('failed to authenticate');
+					setResponse('login failed');
+				}
+		}
+		catch(e){
+			console.log(e);
+			setResponse('cancelled');
+		}
 	}
 
   return (
