@@ -1,6 +1,9 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PrismaClient, Prisma, UserCredentials } from '@prisma/client';
+import { withIronSessionApiRoute } from "iron-session/next";
+import { sessionOptions } from "../../lib/session";
+
 const prisma = new PrismaClient();
 
 import {
@@ -35,9 +38,9 @@ const rpName = 'SimpleWebAuthn Example';
 const rpID = process.env.RP_ID || 'webauthn-poll-app.vercel.app';
 const origin = process.env.ORIGIN || `https://webauthn-poll-app.vercel.app`;
 
+export default withIronSessionApiRoute(handler, sessionOptions);
 
-
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -75,6 +78,9 @@ console.log(authenticator, 'auther');
 
 	const { verified } = verification;
 	if(verified){
+		req.session.user = upsertUser;
+		await req.session.save();
+		console.log(req.session.user,'session');
 		console.log(verified);
 		//start a session with public key and username
 	}

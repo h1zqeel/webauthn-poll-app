@@ -65,6 +65,8 @@ export default async function handler(
 		}
 
 		const { verified, registrationInfo: info } = verification;
+		console.log(info, 'info');
+		console.log(req.body, 'credential');
 		if(verified && info){
 			await prisma.userCredentials.create({data:{
 				credentialID: req.body.id,
@@ -73,6 +75,7 @@ export default async function handler(
 				counter: info.counter,
 			}})
 		}
+		
 		else {
 			await prisma.user.delete({
 				where:{username}
